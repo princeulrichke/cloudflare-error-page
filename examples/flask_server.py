@@ -59,6 +59,8 @@ def index(name: str):
 
     # Get real Ray ID from Cloudflare header
     ray_id = request.headers.get('Cf-Ray')
+    if ray_id:
+        ray_id = ray_id[:16]
 
     # Get real client ip from Cloudflare header or request.remote_addr
     client_ip = request.headers.get('X-Forwarded-For')
