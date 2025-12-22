@@ -387,7 +387,7 @@ $('btnCopyLink').addEventListener('click', () => {
   navigator.clipboard.writeText(field.value).then(() => {
     shareLinkPopover.show();
     setTimeout(() => {
-      shareLinkPopover.hide()
+      shareLinkPopover.hide();
     }, 2000);
   });
 });
@@ -422,7 +422,9 @@ function saveFile(content, saveName) {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 }
+
 let saveAsType;
+let saveAsContent;
 
 function updateSaveAsDialog(e) {
   if (e) {
@@ -445,7 +447,8 @@ function updateSaveAsDialog(e) {
   }
   const params = { ...lastCfg };
   delete params.time;
-  document.getElementById('saveAsDialogCode').innerHTML = codegen.generate(params);
+  $('saveAsDialogCode').innerHTML = saveAsContent = codegen.generate(params);
+  $('saveAsDialogCode').scrollTop = 0;
 
   document.querySelectorAll('#saveAsDialogTypes button').forEach((element) => {
     const isCurrent = element.dataset.type == saveAsType;
@@ -470,9 +473,9 @@ $('saveAsDialogCopyBtn').addEventListener('click', (e) => {
   field.select();
   // field.setSelectionRange(0, field.value.length);
   navigator.clipboard.writeText(field.value).then(() => {
-    saveAsDialogCopyPopover.show()
+    saveAsDialogCopyPopover.show();
     setTimeout(() => {
-      saveAsDialogCopyPopover.hide()
+      saveAsDialogCopyPopover.hide();
     }, 2000);
   });
 });
@@ -489,5 +492,5 @@ $('saveAsDialogSaveBtn').addEventListener('click', (e) => {
       saveName = 'cf_error_page_example.py';
       break;
   }
-  saveFile($('saveAsDialogCode').innerHTML, saveName);
+  saveFile(saveAsContent, saveName);
 });
