@@ -65,8 +65,3 @@ def generate_inlined_css():
 
 if __name__ == '__main__':
     generate_inlined_css()
-    inline_css_resource(
-        os.path.join(resources_folder, 'templates/error.ejs'),
-        os.path.join(resources_folder, 'styles/main.css'),
-        os.path.join(root, 'editor/web/src/template.ejs'),
-    )

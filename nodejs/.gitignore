@@ -1,5 +1,7 @@
 node_modules/
 dist/
+*.tgz
+
 *.log
 *.html
 .DS_Store

@@ -1,11 +1,7 @@
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
 import * as ejs from "ejs";
-import * as crypto from "crypto";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import templateString from "./templates/template.ejs";
+import cssString from "./templates/main.css";
 
 export interface StatusItem {
   status?: "ok" | "error";
@@ -55,69 +51,51 @@ export interface ErrorPageParams {
   creator_info?: CreatorInfo;
 }
 
-/**
- * Fill default parameters if not provided
- */
-function fillParams(params: ErrorPageParams): ErrorPageParams {
-  const filledParams = { ...params };
-
-  if (!filledParams.time) {
-    const now = new Date();
-    filledParams.time =
-      now.toISOString().replace("T", " ").substring(0, 19) + " UTC";
-  }
-
-  if (!filledParams.ray_id) {
-    filledParams.ray_id = crypto.randomBytes(8).toString("hex");
-  }
-
-  return filledParams;
-}
+// Load EJS template
+export const baseTemplate: ejs.TemplateFunction = ejs.compile(templateString);
 
 /**
- * Escape HTML special characters
+ * Generate random hex string for ray-id
  */
-function escapeHtml(text: string): string {
-  const htmlEscapeMap: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  };
-  return text.replace(/[&<>"']/g, (char) => htmlEscapeMap[char] || char);
+function genHexString(digits: number): string {
+  const hex = "0123456789ABCDEF";
+  let output = "";
+  for (let i = 0; i < digits; i++) {
+    output += hex.charAt(Math.floor(Math.random() * hex.length));
+  }
+  return output;
 }
 
 /**
  * Render a customized Cloudflare error page
  * @param params - The parameters for the error page
  * @param allowHtml - Whether to allow HTML in what_happened and what_can_i_do fields (default: true)
+ * @param moreArgs - More arguments passed to ejs template
  * @returns The rendered HTML string
  */
 export function render(
   params: ErrorPageParams,
-  allowHtml: boolean = true
+  allowHtml: boolean = true,
+  moreArgs: {
+    [name: string]: any;
+  } = {}
 ): string {
-  let processedParams = fillParams(params);
+  params = { ...params };
 
-  if (!allowHtml) {
-    processedParams = { ...processedParams };
-    if (processedParams.what_happened) {
-      processedParams.what_happened = escapeHtml(processedParams.what_happened);
-    }
-    if (processedParams.what_can_i_do) {
-      processedParams.what_can_i_do = escapeHtml(processedParams.what_can_i_do);
-    }
+  if (!params.time) {
+    const now = new Date();
+    params.time = now.toISOString().replace("T", " ").substring(0, 19) + " UTC";
+  }
+  if (!params.ray_id) {
+    params.ray_id = genHexString(16);
   }
 
-  // Load EJS template
-  const templatePath = path.join(__dirname, "..", "templates", "error.ejs");
+  if (!allowHtml) {
+    params.what_happened = ejs.escapeXML(params.what_happened ?? "");
+    params.what_can_i_do = ejs.escapeXML(params.what_can_i_do ?? "");
+  }
 
-  const template = fs.readFileSync(templatePath, "utf-8");
-
-  const rendered = ejs.render(template, { params: processedParams });
-
-  return rendered;
+  return baseTemplate({ params, html_style: cssString, ...moreArgs });
 }
 
 export default render;
